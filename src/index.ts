@@ -11,9 +11,8 @@ import {
   userTimezone,
   printDest,
 } from './zulip';
-import { Remind, parseCommand, printRemind, RemindId } from './command';
-import { RedisStore, Store } from './store';
-import { markdownTable, printDate } from './util';
+import { Role, User, RedisStore, Store } from './store';
+import { markdownTable } from './util';
 
 (async () => {
   const z: Zulip = await zulipInit.default({ zuliprc: 'zuliprc-admin.txt' });
@@ -22,8 +21,8 @@ import { markdownTable, printDate } from './util';
   const messageHandler = async (msg: ZulipMsg) => {
     console.log(`Command: ${msg.command}`);
     try {
-      const command = await parseCommand(msg.command, msg, userTimezone(z));
-      switch (command.verb) {
+      const command = await parseCommand(msg.command);
+      switch (command) {
         case 'list':
           await listReminders(msg);
           break;
@@ -44,8 +43,8 @@ import { markdownTable, printDate } from './util';
     }
   };
 
-  const addReminder = async (msg: ZulipMsg, remind: Remind) => {
-    remind.id = await store.add(remind);
+  const addRole = async (msg: ZulipMsg, name: string) => {
+    success = await store.add(remind);
     console.log(printRemind(remind));
     await reply(z, msg, `:check_mark: ${printRemind(remind)}`);
   };
