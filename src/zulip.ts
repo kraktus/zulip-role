@@ -6,22 +6,25 @@ export interface Zulip {
   users: any;
   messages: any;
   reactions: any;
+  streams: any;
   callEndpoint: (path: string, method: 'GET' | 'POST', params: any) => Promise<any>;
 }
 
-export type UserId = number;
+export type ZulipUserId = number;
+export type StreamId = number;
+export type ZulipId = ZulipUserId | StreamId;
 
 export interface ZulipOrigStream {
   type: 'stream';
-  sender_id: UserId;
-  stream_id: number;
+  sender_id: ZulipUserId;
+  stream_id: StreamId;
   subject: string;
 }
 
 export interface ZulipOrigPrivate {
   type: 'private';
-  sender_id: UserId;
-  recipient_id: UserId;
+  sender_id: ZulipUserId;
+  recipient_id: ZulipUserId;
 }
 
 export type ZulipOrig = ZulipOrigStream | ZulipOrigPrivate;
@@ -47,18 +50,20 @@ export interface ZulipDestStream {
 
 export interface ZulipDestPrivate {
   type: 'private';
-  to: [UserId];
+  to: [ZulipUserId];
 }
 
 export type ZulipDest = ZulipDestStream | ZulipDestPrivate;
 
-export type GetTimezone = (userId: UserId) => Promise<string>;
+export type GetTimezone = (ZulipUserId: ZulipUserId) => Promise<string>;
 
 export const messageLoop = async (zulip: Zulip, handler: (msg: ZulipMsg) => Promise<void>) => {
   const q = await zulip.queues.register({ event_types: ['message'] });
   const me = await zulip.users.me.getProfile();
   let lastEventId = q.last_event_id;
   console.log(`Connected to zulip as @${me.full_name}, awaiting commands`);
+  const streams = await zulip.streams.retrieve({include_all_active: true})
+  console.log(`Streams: ${streams.streams.map(r => r.name)}`);
   await send(zulip, { type: 'stream', to: 'zulip', topic: 'bots log' }, 'I started.');
   while (true) {
     try {
@@ -92,8 +97,8 @@ export const botName = async (zulip: Zulip): Promise<string> => {
 
 export const userTimezone =
   (zulip: Zulip) =>
-  async (userId: UserId): Promise<string> => {
-    const res = await zulip.callEndpoint(`/users/${userId}`, 'GET', {});
+  async (ZulipUserId: ZulipUserId): Promise<string> => {
+    const res = await zulip.callEndpoint(`/users/${ZulipUserId}`, 'GET', {});
     return res.user.timezone;
   };
 

@@ -16,7 +16,7 @@ import { RedisStore, Store } from './store';
 import { markdownTable, printDate } from './util';
 
 (async () => {
-  const z: Zulip = await zulipInit.default({ zuliprc: 'zuliprc' });
+  const z: Zulip = await zulipInit.default({ zuliprc: 'zuliprc-admin.txt' });
   const store: Store = new RedisStore();
 
   const messageHandler = async (msg: ZulipMsg) => {
