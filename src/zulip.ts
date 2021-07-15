@@ -10,6 +10,7 @@ export interface Zulip {
   callEndpoint: (path: string, method: 'GET' | 'POST', params: any) => Promise<any>;
 }
 
+export type ZulipUserName = string;
 export type ZulipUserId = number;
 export type StreamId = number;
 
@@ -112,7 +113,14 @@ export const send = async (zulip: Zulip, dest: ZulipDest, text: string) => {
   });
 };
 
-export const getUserIdByName = async (zulip: Zulip, full_name: string) => {
+export const invite = async (zulip: Zulip, user: ZulipUserId, to: StreamId[]) => {
+  await zulip.messages.send({
+    ...dest,
+    content: text,
+  });
+};
+
+export const getUserIdByName = async (zulip: Zulip, full_name: string): Promise<ZulipUserId> => {
   const users = await zulip.users.retrieve();
   return users.members.find((u) => u.full_name = full_name).user_id
 };

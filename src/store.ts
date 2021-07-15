@@ -1,6 +1,6 @@
 import { createNodeRedisClient } from 'handy-redis';
 import { ZulipUserId, StreamId } from './zulip';
-import { RoleId } from './user';
+import { RoleId, Role, User } from './user';
 
 export interface StoreItem {
   type: 'user' | 'role'
@@ -8,7 +8,7 @@ export interface StoreItem {
 }
 
 export interface Store {
-  get: (a: StoreItem) => Promise<StoreItem | undefined>;
+  get: (a: StoreItem) => Promise<any | undefined>; // TODO find better solution
   add: (a: StoreItem) => Promise<boolean>;
   list: (a: StoreItem) => Promise<StoreItem[]>;
   update: (a: StoreItem) => Promise<boolean>;
@@ -23,7 +23,7 @@ export class RedisStore implements Store {
     db: process.env.REDIS_DB,
   })
   private prefix = 'zulip-role'
-  private hashKey = (a: StoreItem) => {return `${this.prefix}-hash-${a.type}`}
+  private hashKey = (a: StoreItem) => `${this.prefix}-hash-${a.type}`
 
   get = async (a: StoreItem) => {
     // do not allow updates
@@ -62,7 +62,7 @@ export class RedisStore implements Store {
     return res === 1;
   };
 
-  private read = (entry: string): StoreItem => {
+  private read = (entry: string): any => {
     const r = JSON.parse(entry);
     return r;
   };

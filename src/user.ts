@@ -3,18 +3,32 @@ import { StoreItem } from './store';
 
 export type RoleId = string;
 
-export interface User extends StoreItem {
+export interface PartialUser extends StoreItem {
   type: 'user'
+  id : string // string version of ZulipUserId
+}
+
+export interface User extends PartialUser {
   roles: Set<RoleId>
 }
 
-export interface Role extends StoreItem {
+export interface PartialRole extends StoreItem {
   type: 'role'
   id: RoleId
+}
+
+export interface Role extends PartialRole {
   streams: Set<StreamId>
 }
 
-export function makeUser(zulip_id: ZulipUserId, roles?: Set<RoleId>): User {
+export function makePartialUser(zulip_id: ZulipUserId): PartialUser {
+  return {
+    type: 'user',
+    id: zulip_id.toString(),
+  }
+}
+
+export function makeUser(zulip_id: ZulipUserId, roles: Set<RoleId>): User {
   return {
     type: 'user',
     id: zulip_id.toString(),
@@ -22,10 +36,19 @@ export function makeUser(zulip_id: ZulipUserId, roles?: Set<RoleId>): User {
   }
 }
 
-export function makeRole(id: RoleId, streams?: Set<StreamId>): Role {
+const toRoleId = (name: string): RoleId => name.toUpperCase()
+
+export function makePartialRole(name: string): PartialRole {
   return {
     type: 'role',
-    id: id,
+    id: toRoleId(name),
+  }
+}
+
+export function makeRole(name: string, streams: Set<StreamId>): Role {
+  return {
+    type: 'role',
+    id: toRoleId(name),
     streams: streams
   }
 }

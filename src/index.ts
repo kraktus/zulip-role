@@ -9,40 +9,31 @@ import {
   ZulipDestPrivate,
   botName,
   printDest,
-  getUserIdByName
+  getUserIdByName,
+  ZulipUserName
 } from './zulip';
 import { RedisStore, Store } from './store';
 import { markdownTable } from './util';
-import { Role, User, makeRole, makeUser } from './user';
+import {parseCommand} from './command';
+import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, PartialRole } from './user';
 
 (async () => {
   const z: Zulip = await zulipInit.default({ zuliprc: 'zuliprc-admin.txt' });
   const store: Store = new RedisStore();
 
-  // const messageHandler = async (msg: ZulipMsg) => {
-  //   console.log(`Command: ${msg.command}`);
-  //   try {
-  //     const command = await parseCommand(msg.command);
-  //     switch (command) {
-  //       case 'list':
-  //         await listReminders(msg);
-  //         break;
-  //       case 'remind':
-  //         await addReminder(msg, command);
-  //         break;
-  //       case 'delete':
-  //         await deleteReminder(msg, command.id);
-  //         break;
-  //       case 'help':
-  //         await help(msg);
-  //         break;
-  //     }
-  //   } catch (err) {
-  //     console.log(err);
-  //     await react(z, msg, 'cross_mark');
-  //     /* await reply(z, msg, 'Sorry, I could not parse that. Try the help command, maybe?'); */
-  //   }
-  // };
+  const messageHandler = async (msg: ZulipMsg) => {
+    console.log(`Command: ${msg.command}`);
+    try {
+      const command = await parseCommand(msg.command);
+      if (command) {
+        await commands[command.verb](command.args)
+      }
+    } catch (err) {
+      console.log(err);
+      await react(z, msg, 'cross_mark');
+      /* await reply(z, msg, 'Sorry, I could not parse that. Try the help command, maybe?'); */
+    }
+  };
 
   const help = async (msg: ZulipMsg) => {
     const name = await botName(z);
@@ -65,13 +56,26 @@ import { Role, User, makeRole, makeUser } from './user';
     );
   };
 
-   const getFullUser = async (name: string) => {
+  const addRole = async (name: ZulipUserName, roles_to_add: PartialRole[]) => {
+    const user = getUserByName(name)
+    const roles = roles_to_add.map(r => getRole(r.id))
+  }
+
+   const getUserByName = async (name: string): Promise<User> => {
     const id = await getUserIdByName(z, name);
-    const partialUser = makeUser(id); // partial, without associated roles
-    const fullUser = await store.get(partialUser);
-    return fullUser
+    const user = await store.get(makePartialUser(id));
+    return user
+  };
+
+   const getRole = async (name: string): Promise<Role> => {
+    const role = await store.get(makePartialRole(name));
+    return role
   };
   const test = async (msg: ZulipMsg) => {}
 
   await messageLoop(z, test);
+
+  const commands = {'add_role':  addRole, 
+                    'list_roles': noParse,
+                    } as const;
 })();
