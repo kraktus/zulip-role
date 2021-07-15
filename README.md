@@ -1,5 +1,7 @@
 # Zulip Role
 
+**Not functional for the moment**
+
 Zulip bot used to mimic discord roles to automatically add users to relevant private streams.
 
 Based on: https://github.com/ornicar/zulip-remind.

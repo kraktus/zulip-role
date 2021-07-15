@@ -8,79 +8,41 @@ import {
   react,
   ZulipDestPrivate,
   botName,
-  userTimezone,
   printDest,
+  getUserIdByName
 } from './zulip';
-import { Role, User, RedisStore, Store } from './store';
+import { RedisStore, Store } from './store';
 import { markdownTable } from './util';
+import { Role, User, makeRole, makeUser } from './user';
 
 (async () => {
   const z: Zulip = await zulipInit.default({ zuliprc: 'zuliprc-admin.txt' });
   const store: Store = new RedisStore();
 
-  const messageHandler = async (msg: ZulipMsg) => {
-    console.log(`Command: ${msg.command}`);
-    try {
-      const command = await parseCommand(msg.command);
-      switch (command) {
-        case 'list':
-          await listReminders(msg);
-          break;
-        case 'remind':
-          await addReminder(msg, command);
-          break;
-        case 'delete':
-          await deleteReminder(msg, command.id);
-          break;
-        case 'help':
-          await help(msg);
-          break;
-      }
-    } catch (err) {
-      console.log(err);
-      await react(z, msg, 'cross_mark');
-      /* await reply(z, msg, 'Sorry, I could not parse that. Try the help command, maybe?'); */
-    }
-  };
-
-  const addRole = async (msg: ZulipMsg, name: string) => {
-    success = await store.add(remind);
-    console.log(printRemind(remind));
-    await reply(z, msg, `:check_mark: ${printRemind(remind)}`);
-  };
-
-  const listReminders = async (msg: ZulipMsg) => {
-    const all = await store.list();
-
-    const printTable = (title: string, rs: Remind[]) =>
-      rs.length
-        ? markdownTable([
-            ['ID', 'Date', title, 'Topic'],
-            ...rs.map(r => ['' + r.id, printDate(r.when), r.what, printDest(r.dest)]),
-          ])
-        : 'No upcoming reminders here.';
-
-    if (msg.type == 'stream')
-      await reply(
-        z,
-        msg,
-        printTable(
-          'Public reminders in this stream',
-          all.filter(r => r.dest.type == 'stream' && r.dest.to == msg.stream_id)
-        )
-      );
-
-    const privateReminders = all.filter(r => r.dest.type == 'private' && r.from == msg.sender_id);
-    if (privateReminders.length || msg.type == 'private') {
-      await send(z, { type: 'private', to: [msg.sender_id] }, printTable('Your private reminders', privateReminders));
-    }
-  };
-
-  const deleteReminder = async (msg: ZulipMsg, id: RemindId) => {
-    const entry = await store.delete(id, msg.sender_id);
-    if (entry) await reply(z, msg, `:check_mark: Deleted: ${printRemind(entry)}`);
-    else await react(z, msg, 'cross_mark');
-  };
+  // const messageHandler = async (msg: ZulipMsg) => {
+  //   console.log(`Command: ${msg.command}`);
+  //   try {
+  //     const command = await parseCommand(msg.command);
+  //     switch (command) {
+  //       case 'list':
+  //         await listReminders(msg);
+  //         break;
+  //       case 'remind':
+  //         await addReminder(msg, command);
+  //         break;
+  //       case 'delete':
+  //         await deleteReminder(msg, command.id);
+  //         break;
+  //       case 'help':
+  //         await help(msg);
+  //         break;
+  //     }
+  //   } catch (err) {
+  //     console.log(err);
+  //     await react(z, msg, 'cross_mark');
+  //     /* await reply(z, msg, 'Sorry, I could not parse that. Try the help command, maybe?'); */
+  //   }
+  // };
 
   const help = async (msg: ZulipMsg) => {
     const name = await botName(z);
@@ -103,15 +65,13 @@ import { markdownTable } from './util';
     );
   };
 
-  const remindNow = async (add: Remind) => {
-    console.log('Reminding now', add);
-    await send(z, add.dest, `Reminder: ${add.what}`);
+   const getFullUser = async (name: string) => {
+    const id = await getUserIdByName(z, name);
+    const partialUser = makeUser(id); // partial, without associated roles
+    const fullUser = await store.get(partialUser);
+    return fullUser
   };
+  const test = async (msg: ZulipMsg) => {}
 
-  setInterval(async () => {
-    const add = await store.poll();
-    if (add) await remindNow(add);
-  }, 1000);
-
-  await messageLoop(z, messageHandler);
+  await messageLoop(z, test);
 })();

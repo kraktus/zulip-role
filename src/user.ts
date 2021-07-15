@@ -1,34 +1,31 @@
-import { ZulipUserId, StreamId, ZulipId } from './zulip';
-import { AbstractItem } from './store';
+import { ZulipUserId, StreamId } from './zulip';
+import { StoreItem } from './store';
 
 export type RoleId = string;
 
-export interface User extends AbstractItem {
+export interface User extends StoreItem {
   type: 'user'
-  id: ZulipUserId
-  roles(): Set<RoleId>
+  roles: Set<RoleId>
 }
 
-export interface Role extends AbstractItem {
+export interface Role extends StoreItem {
   type: 'role'
   id: RoleId
-  streams(): Set<StreamId>
+  streams: Set<StreamId>
 }
 
-export function makeUser(zulip_id: ZulipUserId, roles: Set<RoleId> = new Set): User {
+export function makeUser(zulip_id: ZulipUserId, roles?: Set<RoleId>): User {
   return {
     type: 'user',
-    id: zulip_id,
-    store_id: roles,
-    roles: () => roles
+    id: zulip_id.toString(),
+    roles: roles
   }
 }
 
-export function makeRole(id: RoleId, streams: Set<StreamId> = new Set): Role {
+export function makeRole(id: RoleId, streams?: Set<StreamId>): Role {
   return {
     type: 'role',
     id: id,
-    store_id: streams,
-    streams: () => streams
+    streams: streams
   }
 }

@@ -2,17 +2,17 @@ import { createNodeRedisClient } from 'handy-redis';
 import { ZulipUserId, StreamId } from './zulip';
 import { RoleId } from './user';
 
-export interface AbstractItem {
+export interface StoreItem {
   type: 'user' | 'role'
-  store_id: Set<StreamId | RoleId>
-  id: RoleId | ZulipUserId
+  id: string
 }
 
 export interface Store {
-  add: (a: AbstractItem) => Promise<boolean>;
-  list: (a: AbstractItem) => Promise<AbstractItem[]>;
-  update: (a: AbstractItem) => Promise<boolean>;
-  delete: (a: AbstractItem) => Promise<boolean>;
+  get: (a: StoreItem) => Promise<StoreItem | undefined>;
+  add: (a: StoreItem) => Promise<boolean>;
+  list: (a: StoreItem) => Promise<StoreItem[]>;
+  update: (a: StoreItem) => Promise<boolean>;
+  delete: (a: StoreItem) => Promise<boolean>;
 }
 
 // Just one possible implementation.
@@ -23,35 +23,46 @@ export class RedisStore implements Store {
     db: process.env.REDIS_DB,
   })
   private prefix = 'zulip-role'
-  private hashKey = (a: AbstractItem) => {return `${this.prefix}-hash-${a.type}`}
+  private hashKey = (a: StoreItem) => {return `${this.prefix}-hash-${a.type}`}
 
-  add = async (a: AbstractItem) => {
+  get = async (a: StoreItem) => {
     // do not allow updates
-    const res = await this.client.hsetnx(this.hashKey(a), a.id.toString(), JSON.stringify(a)); // use stringify to allow for changes in `AbstractItem`
+    const entry = await this.client.hget(this.hashKey(a), a.id);
+    if (!entry) {
+      console.error(`Trying to get an non-existing value: ${a.id}`)
+      return undefined
+    } else {
+      return this.read(entry)
+    }
+  }
+
+  add = async (a: StoreItem) => {
+    // do not allow updates
+    const res = await this.client.hsetnx(this.hashKey(a), a.id, JSON.stringify(a)); // use stringify to allow for changes in `StoreItem`
     return res === 1;
   }
 
-  update = async (a: AbstractItem) => {
-    if (!await this.client.hexists(this.hashKey(a), a.id.toString())) {
-      console.error("Trying to update an non-existing value")
+  update = async (a: StoreItem) => {
+    if (!await this.client.hexists(this.hashKey(a), a.id)) {
+      console.error(`Trying to update an non-existing value: ${a.id}`)
       return false
     }
     // do not allow for updates
-    const res = await this.client.hset(this.hashKey(a), [a.id.toString(), JSON.stringify(a)]); // use stringify to allow for changes in `AbstractItem`
+    const res = await this.client.hset(this.hashKey(a), [a.id, JSON.stringify(a)]); // use stringify to allow for changes in `StoreItem`
     return res === 1;
   };
 
-  list = async (a: AbstractItem) => {
+  list = async (a: StoreItem) => {
     const entries = await this.client.hvals(this.hashKey(a));
     return entries.map(this.read);
   };
 
-  delete = async (a: AbstractItem) => {
-    const res = await this.client.hdel(this.hashKey(a), a.id.toString());
+  delete = async (a: StoreItem) => {
+    const res = await this.client.hdel(this.hashKey(a), a.id);
     return res === 1;
   };
 
-  private read = (entry: string): AbstractItem => {
+  private read = (entry: string): StoreItem => {
     const r = JSON.parse(entry);
     return r;
   };

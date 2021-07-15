@@ -54,8 +54,6 @@ export interface ZulipDestPrivate {
 
 export type ZulipDest = ZulipDestStream | ZulipDestPrivate;
 
-export type GetTimezone = (ZulipUserId: ZulipUserId) => Promise<string>;
-
 export const messageLoop = async (zulip: Zulip, handler: (msg: ZulipMsg) => Promise<void>) => {
   const q = await zulip.queues.register({ event_types: ['message'] });
   const me = await zulip.users.me.getProfile();
@@ -94,13 +92,6 @@ export const botName = async (zulip: Zulip): Promise<string> => {
   return me.full_name;
 };
 
-export const userTimezone =
-  (zulip: Zulip) =>
-  async (ZulipUserId: ZulipUserId): Promise<string> => {
-    const res = await zulip.callEndpoint(`/users/${ZulipUserId}`, 'GET', {});
-    return res.user.timezone;
-  };
-
 const origToDest = (orig: ZulipOrig): ZulipDest => {
   return orig.type == 'stream'
     ? {
@@ -119,6 +110,11 @@ export const send = async (zulip: Zulip, dest: ZulipDest, text: string) => {
     ...dest,
     content: text,
   });
+};
+
+export const getUserIdByName = async (zulip: Zulip, full_name: string) => {
+  const users = await zulip.users.retrieve();
+  return users.members.find((u) => u.full_name = full_name).user_id
 };
 
 export const reply = async (zulip: Zulip, to: ZulipMsg, text: string) => await send(zulip, origToDest(to), text);
