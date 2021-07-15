@@ -1,24 +1,11 @@
 import { createNodeRedisClient } from 'handy-redis';
-import { ZulipUserId, StreamId, ZulipId } from './zulip';
+import { ZulipUserId, StreamId } from './zulip';
+import { RoleId } from './user';
 
-type RedisId = string | ZulipUserId;
-
-interface AbstractItem {
+export interface AbstractItem {
   type: 'user' | 'role'
-  store_id: ZulipId[]
-  id: RedisId
-}
-
-export interface User extends AbstractItem {
-  type: 'user'
-  zulip_id(): ZulipUserId
-  roles(): Role[]
-}
-
-export interface Role extends AbstractItem {
-  type: 'role'
-  name(): string
-  streams(): StreamId[]
+  store_id: Set<StreamId | RoleId>
+  id: RoleId | ZulipUserId
 }
 
 export interface Store {

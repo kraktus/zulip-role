@@ -12,7 +12,6 @@ export interface Zulip {
 
 export type ZulipUserId = number;
 export type StreamId = number;
-export type ZulipId = ZulipUserId | StreamId;
 
 export interface ZulipOrigStream {
   type: 'stream';
