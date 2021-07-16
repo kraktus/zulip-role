@@ -80,8 +80,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   };
   const test = async (msg: ZulipMsg) => {
     return
-    const test_id = 426888
-    const res = await invite(z, [test_id], ['core team']);
+    const res = await invite(z, [123], ['core team']);
     console.log(res)
   }
 
@@ -89,7 +88,6 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     const users: User[] = await store.list(makePartialUser(0)) // id not used for that call
     const streams = await getSubbedStreams(z)
     console.log(streams)
-    console.log(userIdFromMail('user426888@zulip-role.zulipchat.com'))
     const streamsByUsers = streams.reduce((acc: any, stream: any) => { // dirty and inefficient, need to switch db (fearing too many calls)
       stream.subscribers.forEach(user_id_email => {
         const user_id = userIdFromMail(user_id_email);
