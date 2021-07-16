@@ -17,7 +17,7 @@ import {
   StreamId
 } from './zulip';
 import { RedisStore, Store } from './store';
-import { markdownTable } from './util';
+import { markdownTable, SetM } from './util';
 import {parseCommand} from './command';
 import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, PartialRole } from './user';
 
@@ -60,14 +60,14 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     );
   };
 
-  const addRole = async (name: ZulipUserName, roles_to_add: PartialRole[]) => {
+  const addRole = async (name: ZulipUserName, roles_to_add: SetM<PartialRole>) => {
     const user: User | undefined = await getUserByName(name);
     // update user already in the db
     if (user) {
-    user.roles = new Set([...user.roles, ...roles_to_add.map(r => r.id)]);
+    user.roles = user.roles.union(roles_to_add.map(r => r.id));
     await store.update(user)
     } else { // new user
-      const user_db = makeUser(user.id, new Set(roles_to_add.map(r => r.id)))
+      const user_db = makeUser(user.id, roles_to_add.map(r => r.id))
       await store.add(user_db)
     }
   }
@@ -109,7 +109,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     })
     console.log(streamsByUsers)
     users.forEach(user => {
-      let streams_should_be_in: Set<StreamId> = new Set();
+      let streams_should_be_in: SetM<StreamId> = user.roles.map(r_id => roles.find(r => r.id == r_id).streams);
       user.roles.forEach(r_id => streams_should_be_in = new Set([...streams_should_be_in, ...roles.find(r => r.id == r_id).streams]))
       const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map(s => s.name)
       await invite(z, [Number(user.id)], actual_stream_names)

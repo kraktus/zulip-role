@@ -1,5 +1,6 @@
 import { ZulipUserId, StreamId } from './zulip';
 import { StoreItem } from './store';
+import { SetM } from './util';
 
 export type RoleId = string;
 
@@ -9,7 +10,7 @@ export interface PartialUser extends StoreItem {
 }
 
 export interface User extends PartialUser {
-  roles: Set<RoleId>
+  roles: SetM<RoleId>
 }
 
 export interface PartialRole extends StoreItem {
@@ -18,7 +19,7 @@ export interface PartialRole extends StoreItem {
 }
 
 export interface Role extends PartialRole {
-  streams: Set<StreamId>
+  streams: SetM<StreamId>
 }
 
 export function makePartialUser(zulip_id: ZulipUserId): PartialUser {
@@ -28,7 +29,7 @@ export function makePartialUser(zulip_id: ZulipUserId): PartialUser {
   }
 }
 
-export function makeUser(zulip_id: ZulipUserId | string, roles: Set<RoleId>): User {
+export function makeUser(zulip_id: ZulipUserId | string, roles: SetM<RoleId>): User {
   return {
     type: 'user',
     id: zulip_id.toString(),
@@ -45,7 +46,7 @@ export function makePartialRole(name: string): PartialRole {
   }
 }
 
-export function makeRole(name: string, streams: Set<StreamId>): Role {
+export function makeRole(name: string, streams: SetM<StreamId>): Role {
   return {
     type: 'role',
     id: toRoleId(name),

@@ -129,7 +129,7 @@ export const invite = async (zulip: Zulip, users: ZulipUserId[], to: StreamName[
 };
 
 export const getSubbedStreams = async (zulip: Zulip): Promise<Stream[]> => {
-  const res = await zulip.streams.subscriptions.retrieve({include_subscribers: true, slim_presence: true})
+  const res = await zulip.streams.subscriptions.retrieve({include_subscribers: true})
   return res.subscriptions
 }
 
@@ -150,4 +150,5 @@ export const react = async (zulip: Zulip, to: ZulipMsg, emoji: string) =>
   });
 
 export const printDest = (dest: ZulipDest) => (dest.type == 'stream' ? `\`${dest.topic}\`` : 'you');
-export const userIdFromMail = (mail: string): ZulipUserId => Number(mail.split('user')[1].split('@')[0]);
+// https://chat.zulip.org/#narrow/stream/378-api-design/topic/.2Fget-subscriptions.20doc.20missmatch.3F
+export const userIdFromMail = (mail: string): ZulipUserId => Number(mail.split('user')[1].split('@')[0]); // bug, should already return ids

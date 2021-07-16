@@ -1,6 +1,7 @@
 import { ZulipDest, ZulipOrig, ZulipUserName } from './zulip';
 import { RedisStore, Store } from './store';
 import { PartialRole, User, makePartialRole, makeUser } from './user';
+import { SetM } from './util';
 
 type ValueOf<T> = T[keyof T];
 
@@ -16,13 +17,13 @@ export const parseCommand = async (msg: string): Promise<ParsedInput | undefined
   else return undefined;
 };
 
-const parseAddRole = (msg: string): [ZulipUserName, PartialRole[]] => {
-  const roles: PartialRole[] = msg.split(' ').slice(1, -1).map(id => makePartialRole(id));
+const parseAddRole = (msg: string): [ZulipUserName, SetM<PartialRole>] => {
+  const roles: SetM<PartialRole> = new SetM(msg.split(' ').slice(1, -1).map(id => makePartialRole(id)));
   const userName: ZulipUserName = msg.split(' ')[-1]
   return [userName, roles]
 }
 
-const noParse = (msg: string) => undefined
+const noParse = (msg: string): void => undefined
 
 const verbs = {'add_role':  parseAddRole, 
                'list_roles': noParse,
