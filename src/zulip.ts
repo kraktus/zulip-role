@@ -13,6 +13,13 @@ export interface Zulip {
 export type ZulipUserName = string;
 export type ZulipUserId = number;
 export type StreamId = number;
+export type StreamName = string;
+
+export interface Stream {
+  name: StreamName
+  stream_id: StreamId
+  subscribers?: ZulipUserId[]
+}
 
 export interface ZulipOrigStream {
   type: 'stream';
@@ -113,12 +120,21 @@ export const send = async (zulip: Zulip, dest: ZulipDest, text: string) => {
   });
 };
 
-export const invite = async (zulip: Zulip, user: ZulipUserId, to: StreamId[]) => {
-  await zulip.messages.send({
-    ...dest,
-    content: text,
-  });
+export const invite = async (zulip: Zulip, users: ZulipUserId[], to: StreamName[]) => {
+  const params = {
+    subscriptions: to.map(n => ({name: n})), // Is considered as code block without parenthesis
+    principals: users,
+  };
+  await zulip.users.me.subscriptions.add(params);
 };
+
+export const getSubbedStreams = async (zulip: Zulip): Promise<Stream[]> => {
+  const res = await zulip.streams.subscriptions.retrieve({include_subscribers: true, slim_presence: true})
+  return res.subscriptions
+}
+
+export const getAllStreams = async (zulip: Zulip): Promise<Stream[]> => 
+  await zulip.streams.retrieve({include_all_active: true})
 
 export const getUserIdByName = async (zulip: Zulip, full_name: string): Promise<ZulipUserId> => {
   const users = await zulip.users.retrieve();
@@ -134,3 +150,4 @@ export const react = async (zulip: Zulip, to: ZulipMsg, emoji: string) =>
   });
 
 export const printDest = (dest: ZulipDest) => (dest.type == 'stream' ? `\`${dest.topic}\`` : 'you');
+export const userIdFromMail = (mail: string): ZulipUserId => Number(mail.split('user')[1].split('@')[0]);

@@ -10,7 +10,7 @@ export interface StoreItem {
 export interface Store {
   get: (a: StoreItem) => Promise<any | undefined>; // TODO find better solution
   add: (a: StoreItem) => Promise<boolean>;
-  list: (a: StoreItem) => Promise<StoreItem[]>;
+  list: (a: StoreItem) => Promise<any[]>;
   update: (a: StoreItem) => Promise<boolean>;
   delete: (a: StoreItem) => Promise<boolean>;
 }

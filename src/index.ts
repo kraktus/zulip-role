@@ -6,11 +6,14 @@ import {
   reply,
   send,
   react,
+  invite,
   ZulipDestPrivate,
   botName,
   printDest,
   getUserIdByName,
-  ZulipUserName
+  ZulipUserName,
+  getSubbedStreams,
+  userIdFromMail
 } from './zulip';
 import { RedisStore, Store } from './store';
 import { markdownTable } from './util';
@@ -57,25 +60,54 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   };
 
   const addRole = async (name: ZulipUserName, roles_to_add: PartialRole[]) => {
-    const user = getUserByName(name)
-    const roles = roles_to_add.map(r => getRole(r.id))
+    const user = await getUserByName(name);
+    // update user
+    user.roles = new Set([...user.roles, ...roles_to_add.map(r => r.id)]);
+    await store.update(user)
   }
 
    const getUserByName = async (name: string): Promise<User> => {
     const id = await getUserIdByName(z, name);
     const user = await store.get(makePartialUser(id));
+    console.log(user)
     return user
   };
 
    const getRole = async (name: string): Promise<Role> => {
     const role = await store.get(makePartialRole(name));
+    console.log(role)
     return role
   };
-  const test = async (msg: ZulipMsg) => {}
+  const test = async (msg: ZulipMsg) => {
+    return
+    const test_id = 426888
+    const res = await invite(z, [test_id], ['core team']);
+    console.log(res)
+  }
 
-  await messageLoop(z, test);
+  const syncUsers =  async (msg: ZulipMsg) => {
+    const users: User[] = await store.list(makePartialUser(0)) // id not used for that call
+    const streams = await getSubbedStreams(z)
+    console.log(streams)
+    console.log(userIdFromMail('user426888@zulip-role.zulipchat.com'))
+    const streamsByUsers = streams.reduce((acc: any, stream: any) => { // dirty and inefficient, need to switch db (fearing too many calls)
+      stream.subscribers.forEach(user_id_email => {
+        const user_id = userIdFromMail(user_id_email);
+        console.log(user_id)
+        if (acc[user_id]) {
+          acc[user_id].append(stream)
+        } else {
+          acc[user_id] = [stream]
+        }
+      })
+      return acc
+    })
+    console.log(streamsByUsers)
+  }
 
+
+  // ------------------------
+  await messageLoop(z, syncUsers);
   const commands = {'add_role':  addRole, 
-                    'list_roles': noParse,
                     } as const;
 })();
