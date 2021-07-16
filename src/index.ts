@@ -13,7 +13,8 @@ import {
   getUserIdByName,
   ZulipUserName,
   getSubbedStreams,
-  userIdFromMail
+  userIdFromMail,
+  StreamId
 } from './zulip';
 import { RedisStore, Store } from './store';
 import { markdownTable } from './util';
@@ -60,10 +61,15 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   };
 
   const addRole = async (name: ZulipUserName, roles_to_add: PartialRole[]) => {
-    const user = await getUserByName(name);
-    // update user
+    const user: User | undefined = await getUserByName(name);
+    // update user already in the db
+    if (user) {
     user.roles = new Set([...user.roles, ...roles_to_add.map(r => r.id)]);
     await store.update(user)
+    } else { // new user
+      const user_db = makeUser(user.id, new Set(roles_to_add.map(r => r.id)))
+      await store.add(user_db)
+    }
   }
 
    const getUserByName = async (name: string): Promise<User> => {
@@ -86,9 +92,10 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
   const syncUsers =  async (msg: ZulipMsg) => {
     const users: User[] = await store.list(makePartialUser(0)) // id not used for that call
+    const roles: Role[] = await store.list(makePartialRole("")) // id not used for that call
     const streams = await getSubbedStreams(z)
     console.log(streams)
-    const streamsByUsers = streams.reduce((acc: any, stream: any) => { // dirty and inefficient, need to switch db (fearing too many calls)
+    const streamsByUsers: any = streams.reduce((acc: any, stream: any) => { // dirty and inefficient, need to switch db (fearing too many API calls, if using /users/{user_id}/subscriptions/{stream_id})
       stream.subscribers.forEach(user_id_email => {
         const user_id = userIdFromMail(user_id_email);
         console.log(user_id)
@@ -101,6 +108,12 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
       return acc
     })
     console.log(streamsByUsers)
+    users.forEach(user => {
+      let streams_should_be_in: Set<StreamId> = new Set();
+      user.roles.forEach(r_id => streams_should_be_in = new Set([...streams_should_be_in, ...roles.find(r => r.id == r_id).streams]))
+      const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map(s => s.name)
+      await invite(z, [Number(user.id)], actual_stream_names)
+    }
   }
 
 
