@@ -11,7 +11,7 @@ type FunctionPropertyNames<T> = {
 
 export class SetM<T> extends Set<T> {
 
-  private f = <M extends keyof T[]>(method: M): Function => ((...args) => new SetM(([...this][method] as any)(...args)) as any);
+  private f: <U, M extends keyof T[]>(method: M) (...args: any) => SetM<U> = ((...args) => new SetM(([...this][method] as any)(...args)) as any);
 
   map = this.f('map')
   flatMap = this.f('flatMap')
