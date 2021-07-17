@@ -5,17 +5,12 @@ export const markdownTable = (rows: string[][]) =>
     '\n'
   );
 
-type FunctionPropertyNames<T> = {
-  [K in keyof T]: T[K] extends Function ? K : never
-}[keyof T]
+type UnPack<T> = T extends (infer U)[] ? U : T;
 
 export class SetM<T> extends Set<T> {
 
-  private f: <U, M extends keyof T[]>(method: M) (...args: any) => SetM<U> = ((...args) => new SetM(([...this][method] as any)(...args)) as any);
-
-  map = this.f('map')
-  flatMap = this.f('flatMap')
-  fold = this.f('reduce')
+  map = (...args: Parameters<T[]['map']>): SetM<UnPack<ReturnType<T[]['map']>>> => new SetM([...this].map(...args));
+  flatMap = (...args: Parameters<T[]['flatMap']>): SetM<UnPack<ReturnType<T[]['flatMap']>>> => new SetM([...this].flatMap(...args));
 
   union = (other: SetM<T>): SetM<T> => new SetM([...this, ...other])
 

@@ -95,11 +95,11 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     const roles: Role[] = await store.list(makePartialRole("")) // id not used for that call
     const streams = await getSubbedStreams(z)
     console.log(streams)
-    users.forEach(user => {
+    await Promise.all(users.map(user => {
       let streams_should_be_in: SetM<StreamId> = user.roles.flatMap(r_id => roles.find(r => r.id == r_id).streams);
-      const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map(s => s.name)
-      await invite(z, [Number(user.id)], actual_stream_names)
-    }
+      const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map(s => s.name);
+      return invite(z, [Number(user.id)], actual_stream_names)
+    }))
   }
 
 
