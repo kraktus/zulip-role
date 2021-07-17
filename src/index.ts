@@ -109,7 +109,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     })
     console.log(streamsByUsers)
     users.forEach(user => {
-      let streams_should_be_in: SetM<StreamId> = user.roles.map(r_id => roles.find(r => r.id == r_id).streams);
+      let streams_should_be_in: SetM<StreamId> = user.roles.flatMap(r_id => roles.find(r => r.id == r_id).streams);
       user.roles.forEach(r_id => streams_should_be_in = new Set([...streams_should_be_in, ...roles.find(r => r.id == r_id).streams]))
       const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map(s => s.name)
       await invite(z, [Number(user.id)], actual_stream_names)
