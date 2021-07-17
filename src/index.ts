@@ -95,22 +95,9 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     const roles: Role[] = await store.list(makePartialRole("")) // id not used for that call
     const streams = await getSubbedStreams(z)
     console.log(streams)
-    const streamsByUsers: any = streams.reduce((acc: any, stream: any) => { // dirty and inefficient, need to switch db (fearing too many API calls, if using /users/{user_id}/subscriptions/{stream_id})
-      stream.subscribers.forEach(user_id_email => {
-        const user_id = userIdFromMail(user_id_email);
-        console.log(user_id)
-        if (acc[user_id]) {
-          acc[user_id].append(stream)
-        } else {
-          acc[user_id] = [stream]
-        }
-      })
-      return acc
-    })
-    console.log(streamsByUsers)
     users.forEach(user => {
       let streams_should_be_in: SetM<StreamId> = user.roles.flatMap(r_id => roles.find(r => r.id == r_id).streams);
-      user.roles.forEach(r_id => streams_should_be_in = new Set([...streams_should_be_in, ...roles.find(r => r.id == r_id).streams]))
+      // user.roles.forEach(r_id => streams_should_be_in = new Set([...streams_should_be_in, ...roles.find(r => r.id == r_id).streams]))
       const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map(s => s.name)
       await invite(z, [Number(user.id)], actual_stream_names)
     }

@@ -129,7 +129,7 @@ export const invite = async (zulip: Zulip, users: ZulipUserId[], to: StreamName[
 };
 
 export const getSubbedStreams = async (zulip: Zulip): Promise<Stream[]> => {
-  const res = await zulip.streams.subscriptions.retrieve({include_subscribers: true})
+  const res = await zulip.streams.subscriptions.retrieve()
   return res.subscriptions
 }
 
