@@ -5,13 +5,23 @@ export const markdownTable = (rows: string[][]) =>
     '\n'
   );
 
-type UnPack<T> = T extends (infer U)[] ? U : T;
+type UnPack<T> = T extends (infer U)[] ? U : never;
 
 export class SetM<T> extends Set<T> {
 
-  map = (...args: Parameters<T[]['map']>): SetM<UnPack<ReturnType<T[]['map']>>> => new SetM([...this].map(...args));
-  flatMap = (...args: Parameters<T[]['flatMap']>): SetM<UnPack<ReturnType<T[]['flatMap']>>> => new SetM([...this].flatMap(...args));
+   fold = <Z>(acc: Z, callback: (a: Z, t: T) => Z): Z => {
+     super.forEach((t) => {
+       acc = callback(acc, t)
+   })
+   return acc
+   }
 
-  union = (other: SetM<T>): SetM<T> => new SetM([...this, ...other])
+   // private f = <M extends keyof T[]>(method: M): T[][M] => ((...args: any) => ([...this][method] as any)(...args)) as any;
 
-}
+   map = < Z extends UnPack<ReturnType<T[]['map']>> >(...args: Parameters<T[]['map']>): SetM<Z> => new SetM<Z>([...this].map(...args) as Z[]);
+
+   union = (other: SetM<T>): SetM<T> => new SetM([...this, ...other])
+
+   flatten = (): SetM<T> => 
+
+ }
