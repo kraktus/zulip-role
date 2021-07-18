@@ -1,10 +1,10 @@
-import { createNodeRedisClient } from "handy-redis";
-import { ZulipUserId, StreamId } from "./zulip";
-import { RoleId, Role, User, makePartialUser, makePartialRole } from "./user";
-import { SetM } from "./util";
+import { createNodeRedisClient } from 'handy-redis';
+import { ZulipUserId, StreamId } from './zulip';
+import { RoleId, Role, User, makePartialUser, makePartialRole } from './user';
+import { SetM } from './util';
 
 export interface StoreItem {
-  type: "user" | "role";
+  type: 'user' | 'role';
   id: string;
 }
 
@@ -26,7 +26,7 @@ export class RedisStore implements Store {
     password: process.env.REDIS_PASSWORD,
     db: process.env.REDIS_DB ? process.env.REDIS_DB : 1,
   });
-  private prefix = "zulip-role";
+  private prefix = 'zulip-role';
   private hashKey = (a: StoreItem) => `${this.prefix}-hash-${a.type}`;
 
   get = async (a: StoreItem) => {
@@ -44,11 +44,7 @@ export class RedisStore implements Store {
     // do not allow updates
     console.log(a);
     console.log(JSON.stringify(a));
-    const res = await this.client.hsetnx(
-      this.hashKey(a),
-      a.id,
-      JSON.stringify(a)
-    ); // use stringify to allow for changes in `StoreItem`
+    const res = await this.client.hsetnx(this.hashKey(a), a.id, JSON.stringify(a)); // use stringify to allow for changes in `StoreItem`
     return res === 1;
   };
 
@@ -58,10 +54,7 @@ export class RedisStore implements Store {
       console.error(`Trying to update an non-existing value: ${a.id}`);
       return false;
     }
-    const res = await this.client.hset(this.hashKey(a), [
-      a.id,
-      JSON.stringify(a),
-    ]); // use stringify to allow for changes in `StoreItem`
+    const res = await this.client.hset(this.hashKey(a), [a.id, JSON.stringify(a)]); // use stringify to allow for changes in `StoreItem`
     return res === 1;
   };
 
@@ -76,10 +69,10 @@ export class RedisStore implements Store {
   };
 
   private read = (entry: string): any => {
-    console.log("entry: " + entry);
+    console.log('entry: ' + entry);
     const r = JSON.parse(entry);
     console.log(r);
-    if (r.type === "role") {
+    if (r.type === 'role') {
       r.streams = new SetM(r.streams.toJSON);
     }
     return r;
@@ -90,6 +83,6 @@ export class RedisStore implements Store {
   };
 
   list_role = async () => {
-    return this.list(makePartialRole(""));
+    return this.list(makePartialRole(''));
   };
 }

@@ -1,11 +1,11 @@
-import { ZulipUserId, StreamId } from "./zulip";
-import { StoreItem } from "./store";
-import { SetM } from "./util";
+import { ZulipUserId, StreamId } from './zulip';
+import { StoreItem } from './store';
+import { SetM } from './util';
 
 export type RoleId = Uppercase<string>;
 
 export interface PartialUser extends StoreItem {
-  readonly type: "user";
+  readonly type: 'user';
   id: string; // string version of ZulipUserId
 }
 
@@ -14,7 +14,7 @@ export interface User extends PartialUser {
 }
 
 export interface PartialRole extends StoreItem {
-  readonly type: "role";
+  readonly type: 'role';
   id: RoleId;
 }
 
@@ -24,17 +24,14 @@ export interface Role extends PartialRole {
 
 export function makePartialUser(zulip_id: ZulipUserId): PartialUser {
   return {
-    type: "user",
+    type: 'user',
     id: zulip_id.toString(),
   };
 }
 
-export function makeUser(
-  zulip_id: ZulipUserId | string,
-  roles: SetM<RoleId>
-): User {
+export function makeUser(zulip_id: ZulipUserId | string, roles: SetM<RoleId>): User {
   return {
-    type: "user",
+    type: 'user',
     id: zulip_id.toString(),
     roles: roles,
   };
@@ -44,14 +41,14 @@ const toRoleId = (name: string): RoleId => name.toUpperCase();
 
 export function makePartialRole(name: string): PartialRole {
   return {
-    type: "role",
+    type: 'role',
     id: toRoleId(name),
   };
 }
 
 export function makeRole(name: string, streams: SetM<StreamId>): Role {
   return {
-    type: "role",
+    type: 'role',
     id: toRoleId(name),
     streams: streams,
   };

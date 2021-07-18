@@ -1,7 +1,7 @@
-import { ZulipDest, ZulipOrig, ZulipUserName, Stream } from "./zulip";
-import { RedisStore, Store } from "./store";
-import { PartialRole, User, makePartialRole, makeUser } from "./user";
-import { SetM } from "./util";
+import { ZulipDest, ZulipOrig, ZulipUserName, Stream } from './zulip';
+import { RedisStore, Store } from './store';
+import { PartialRole, User, makePartialRole, makeUser } from './user';
+import { SetM } from './util';
 
 type ValueOf<T> = T[keyof T];
 
@@ -11,42 +11,38 @@ type FunctionReturnValues<T> = {
 
 const parseAddRole = (msg: string): [ZulipUserName, SetM<PartialRole>] => {
   // first word is the command name
-  console.log(msg.split(" "));
-  console.log(msg.split(" ").slice(1, -1));
-  console.log(msg.split(" ").slice(-1)[0]);
+  console.log(msg.split(' '));
+  console.log(msg.split(' ').slice(1, -1));
+  console.log(msg.split(' ').slice(-1)[0]);
   const roles: SetM<PartialRole> = new SetM(
     msg
-      .split(" ")
+      .split(' ')
       .slice(1, -1)
-      .map((id) => makePartialRole(id))
+      .map(id => makePartialRole(id))
   );
   console.log(JSON.stringify(roles));
-  const userName: ZulipUserName = msg.split(" ").slice(-1)[0];
+  const userName: ZulipUserName = msg.split(' ').slice(-1)[0];
   return [userName, roles];
 };
 
-const parseAddStream = (msg: string): [string, SetM<Stream["name"]>] => {
+const parseAddStream = (msg: string): [string, SetM<Stream['name']>] => {
   // stream names need to be lowercase for further process.
   // Should accept stream-name and #stream-name
-  console.log(msg.split(" "));
-  console.log(msg.split(" ").slice(1, -1));
-  console.log(msg.split(" ").slice(-1)[0]);
+  console.log(msg.split(' '));
+  console.log(msg.split(' ').slice(1, -1));
+  console.log(msg.split(' ').slice(-1)[0]);
   const streams = new SetM(
     msg
-      .split(" ")
+      .split(' ')
       .slice(1, -1)
-      .map((str) => remove_first_char_if(str.toLowerCase(), "#"))
+      .map(str => remove_first_char_if(str.toLowerCase(), '#'))
   );
   // Should accept role_name and @role_name
-  const role_name: string = remove_first_char_if(
-    msg.split(" ").slice(-1)[0],
-    "@"
-  );
+  const role_name: string = remove_first_char_if(msg.split(' ').slice(-1)[0], '@');
   return [role_name, streams];
 };
 
-const remove_first_char_if = (str: string, char: string) =>
-  str.startsWith(char) ? str.substring(char.length) : str;
+const remove_first_char_if = (str: string, char: string) => (str.startsWith(char) ? str.substring(char.length) : str);
 
 const noParse = (msg: string): [] => [];
 
@@ -64,10 +60,8 @@ interface ParsedInput {
   args: Args;
 }
 
-export const parseCommand = async (
-  msg: string
-): Promise<ParsedInput | undefined> => {
-  const verb = msg.split(" ")[0];
+export const parseCommand = async (msg: string): Promise<ParsedInput | undefined> => {
+  const verb = msg.split(' ')[0];
   console.log(`Verb: ${verb}`);
   const parseFunction: Function = verbs[verb];
   if (parseFunction) {
