@@ -15,6 +15,7 @@ const parseAddRole = (msg: string): [ZulipUserName, SetM<PartialRole>] => {
   console.log(msg.split(' ').slice(1, -1))
   console.log(msg.split(' ').slice(-1)[0])
   const roles: SetM<PartialRole> = new SetM(msg.split(' ').slice(1, -1).map(id => makePartialRole(id)));
+  console.log(JSON.stringify(roles))
   const userName: ZulipUserName = msg.split(' ').slice(-1)[0]
   return [userName, roles]
 }

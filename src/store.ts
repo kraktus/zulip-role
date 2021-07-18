@@ -69,7 +69,7 @@ export class RedisStore implements Store {
   };
 
   private read = (entry: string): any => {
-    console.log(entry)
+    console.log('entry: ' + entry)
     const r = JSON.parse(entry);
     console.log(r)
     if (r.type === 'role') {

@@ -144,9 +144,10 @@ export const getStreamByName = async (zulip: Zulip, stream_names: SetM<Stream['n
 export const getAllStreams = async (zulip: Zulip): Promise<Stream[]> => 
   await zulip.streams.retrieve({include_all_active: true})
 
-export const getUserIdByName = async (zulip: Zulip, full_name: string): Promise<ZulipUserId> => {
+export const getUserIdByName = async (zulip: Zulip, full_name: string): Promise<ZulipUserId | undefined> => {
   const users = await zulip.users.retrieve();
-  return users.members.find((u) => u.full_name = full_name).user_id
+  const user = users.members.find((u) => u.full_name === full_name)
+  return user ? user.user_id : undefined
 };
 
 export const reply = async (zulip: Zulip, to: ZulipMsg, text: string) => await send(zulip, origToDest(to), text);

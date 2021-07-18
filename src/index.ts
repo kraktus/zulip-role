@@ -53,7 +53,9 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
   const addRole = async (m: ZulipMsg, name: ZulipUserName, roles_to_add: SetM<PartialRole>) => {
     const user: User | undefined = await getUserByName(name);
-    const checked_roles: Role[] = await Promise.all(roles_to_add.map<Promise<Role>>(r => getRole(r.id)))
+    console.log('roles to add ' + roles_to_add.join(' '))
+    const checked_roles = await Promise.all(roles_to_add.map<Promise<Role | undefined>>(r => getRole(r.id)))
+    console.log('checked roles ' + JSON.stringify(checked_roles))
     sanitize_input(m, checked_roles, roles_to_add, 'roles', (x: Role[]) => x.join(' '), (x: SetM<PartialRole>) => x.join(' '))
     // update user already in the db
     if (user) {
@@ -70,7 +72,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   }
 
   const addStream = async (m: ZulipMsg, role_name: string, stream_names: SetM<Stream['name']>, insert: boolean = false) => {
-    const role: Role | undefined = await getRole(role_name)
+    const role = await getRole(role_name)
     const streams: SetM<Stream> = await getStreamByName(z, stream_names)
     sanitize_input(m, streams, stream_names, 'streams', (x: SetM<Stream>) => x.map(s => s.name).join(' '), (x: SetM<Stream['name']>) => x.join(' '))
     console.log(`Streams fetched ${[...streams]}`)
@@ -119,14 +121,14 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     }
   }
 
-   const getUserByName = async (name: string): Promise<User> => {
+   const getUserByName = async (name: string): Promise<User | undefined> => {
     const id = await getUserIdByName(z, name);
     const user = await store.get(makePartialUser(id));
     console.log(user)
     return user
   };
 
-   const getRole = async (name: string): Promise<Role> => {
+   const getRole = async (name: string): Promise<Role | undefined> => {
     const role: Role | undefined = await store.get(makePartialRole(name));
     console.log(role)
     return role
@@ -141,9 +143,10 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
 
   const test = async (msg: ZulipMsg) => {
-    return
-    const res = await invite(z, [123], ['core team']);
-    console.log(res)
+    const res = await getUserByName("Ext");
+    const res2 = await getUserByName("xxxx");
+    console.log(JSON.stringify(res))
+    console.log(JSON.stringify(res2))
   }
 
   const syncUsers =  async (only_these?: ZulipUserId[]) => {
@@ -184,5 +187,5 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     }
   };
 
-  await messageLoop(z, messageHandler);
+  await messageLoop(z, test);
 })();

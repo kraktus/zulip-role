@@ -13,7 +13,7 @@ export class SetM<T> extends Set<T> {
    flatMap = < Z extends UnPack<ReturnType<T[]['flatMap']>> >(...args: Parameters<T[]['flatMap']>): SetM<Z> => new SetM<Z>([...this].flatMap(...args) as Z[]);
    fold = < Z extends UnPack<ReturnType<T[]['reduce']>> >(...args: Parameters<T[]['reduce']>): SetM<Z> => new SetM<Z>([...this].reduce(...args) as Z);
    filter = < Z extends UnPack<ReturnType<T[]['filter']>> >(...args: Parameters<T[]['filter']>): SetM<Z> => new SetM<Z>([...this].filter(...args) as Z[]);
-   join = < Z extends UnPack<ReturnType<T[]['join']>> >(...args: Parameters<T[]['join']>): Z => [...this].join(...args) as Z;
+   join = (...args: Parameters<T[]['join']>): string => [...this].join(...args);
    toJSON = [...this]
    length = this.size
 
