@@ -28,20 +28,6 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   const z: Zulip = await zulipInit.default({ zuliprc: 'zuliprc-admin.txt' });
   const store: Store = new RedisStore();
 
-  const messageHandler = async (msg: ZulipMsg) => {
-    console.log(`Command: ${msg.command}`);
-    try {
-      const command = await parseCommand(msg.command);
-      if (command) {
-        await commands[command.verb](msg, ...command.args as any) // TODO fix that
-      }
-    } catch (err) {
-      console.log(err);
-      await react(z, msg, 'cross_mark');
-      /* await reply(z, msg, 'Sorry, I could not parse that. Try the help command, maybe?'); */
-    }
-  };
-
   const help = async (msg: ZulipMsg) => {
     const name = await botName(z);
     const mention = `@${name}`;
@@ -87,7 +73,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
       role.streams = role.streams.union(streams.map(s => s.stream_id))
       await store.update(role)
     } else if (insert) {
-      console.log(`${role.id} does not exist, creating it`)
+      console.log(`${role_name} does not exist, creating it`)
       const role_db = makeRole(role_name, streams.map(s => s.stream_id))
       await store.add(role_db)
     }
@@ -98,7 +84,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     }
   }
 
-  const createRole = async (_: ZulipMsg, role_name: string, stream_names: SetM<Stream['name']>) => addStream(role_name, stream_names, true)
+  const createRole = async (_: ZulipMsg, role_name: string, stream_names: SetM<Stream['name']>) => addStream(_, role_name, stream_names, true)
 
 
  const list = async (msg: ZulipMsg, streams: boolean = true) => { // DEBUG: should be false by default
@@ -158,10 +144,27 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
 
   // ------------------------
-  await messageLoop(z, test);
   const commands = {'add_role':  addRole, 
                     'add_stream':  addStream, 
                     'create_role': createRole,
                     'list': list,
                     } as const;
+
+
+    const messageHandler = async (msg: ZulipMsg) => {
+    console.log(`Command: ${msg.command}`);
+    try {
+      const command = await parseCommand(msg.command);
+      console.log(command)
+      if (command) {
+        await commands[command.verb](msg, ...command.args as any) // TODO fix that
+      }
+    } catch (err) {
+      console.log(err);
+      await react(z, msg, 'cross_mark');
+      /* await reply(z, msg, 'Sorry, I could not parse that. Try the help command, maybe?'); */
+    }
+  };
+
+  await messageLoop(z, messageHandler);
 })();
