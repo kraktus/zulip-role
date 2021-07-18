@@ -1,55 +1,58 @@
-import { ZulipUserId, StreamId } from './zulip';
-import { StoreItem } from './store';
-import { SetM } from './util';
+import { ZulipUserId, StreamId } from "./zulip";
+import { StoreItem } from "./store";
+import { SetM } from "./util";
 
-export type RoleId = Uppercase<string>
+export type RoleId = Uppercase<string>;
 
 export interface PartialUser extends StoreItem {
-  readonly type: 'user'
-  id : string // string version of ZulipUserId
+  readonly type: "user";
+  id: string; // string version of ZulipUserId
 }
 
 export interface User extends PartialUser {
-  roles: SetM<RoleId>
+  roles: SetM<RoleId>;
 }
 
 export interface PartialRole extends StoreItem {
-  readonly type: 'role'
-  id: RoleId
+  readonly type: "role";
+  id: RoleId;
 }
 
 export interface Role extends PartialRole {
-  streams: SetM<StreamId>
+  streams: SetM<StreamId>;
 }
 
 export function makePartialUser(zulip_id: ZulipUserId): PartialUser {
   return {
-    type: 'user',
+    type: "user",
     id: zulip_id.toString(),
-  }
+  };
 }
 
-export function makeUser(zulip_id: ZulipUserId | string, roles: SetM<RoleId>): User {
+export function makeUser(
+  zulip_id: ZulipUserId | string,
+  roles: SetM<RoleId>
+): User {
   return {
-    type: 'user',
+    type: "user",
     id: zulip_id.toString(),
-    roles: roles
-  }
+    roles: roles,
+  };
 }
 
-const toRoleId = (name: string): RoleId => name.toUpperCase()
+const toRoleId = (name: string): RoleId => name.toUpperCase();
 
 export function makePartialRole(name: string): PartialRole {
   return {
-    type: 'role',
+    type: "role",
     id: toRoleId(name),
-  }
+  };
 }
 
 export function makeRole(name: string, streams: SetM<StreamId>): Role {
   return {
-    type: 'role',
+    type: "role",
     id: toRoleId(name),
-    streams: streams
-  }
+    streams: streams,
+  };
 }
