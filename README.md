@@ -52,7 +52,7 @@ yarn build
 Deploy it to a server:
 
 ```
-rsync -av zuliprc dist node_modules user@server:/home/zulip-remind/
+rsync -av zuliprc dist node_modules user@server:/home/zulip-role/
 ```
 
 Start it on the server:
@@ -65,13 +65,13 @@ node dist/index.js
 
 ```
 [Unit]
-Description=Zulip remind bot
+Description=Zulip role bot
 After=network.target
 
 [Service]
 User=root
 Group=root
-WorkingDirectory=/home/zulip-remind
+WorkingDirectory=/home/zulip-role
 Environment="REDIS_PASSWORD="
 Environment="REDIS_PORT=6379"
 ExecStart=/usr/bin/node dist/index.js

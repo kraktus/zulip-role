@@ -22,6 +22,15 @@ export interface Stream {
   subscribers?: ZulipUserId[];
 }
 
+export interface ZulipUser {
+  user_id: ZulipUserId;
+  full_name: string;
+}
+
+export interface userResponse {
+  members: ZulipUser[];
+}
+
 export interface ZulipOrigStream {
   type: 'stream';
   sender_id: ZulipUserId;
@@ -144,8 +153,8 @@ export const getStreamByName = async (zulip: Zulip, stream_names: SetM<Stream['n
 export const getAllStreams = async (zulip: Zulip): Promise<Stream[]> =>
   await zulip.streams.retrieve({ include_all_active: true });
 
-export const getUserIdByName = async (zulip: Zulip, full_name: string): Promise<ZulipUserId | undefined> => {
-  const users = await zulip.users.retrieve();
+export const getUserIdByName = async (zulip: Zulip, full_name: string) => {
+  const users: userResponse = await zulip.users.retrieve();
   const user = users.members.find(u => u.full_name === full_name);
   return user ? user.user_id : undefined;
 };

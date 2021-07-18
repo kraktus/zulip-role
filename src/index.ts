@@ -53,33 +53,37 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
   const addRole = async (m: ZulipMsg, name: ZulipUserName, roles_to_add: SetM<PartialRole>) => {
     const user: User | undefined = await getUserByName(name);
+    const user_id = await getUserIdByName(z, name);
     console.log('roles to add ' + roles_to_add.join(' '));
     const checked_roles = await Promise.all(roles_to_add.map<Promise<Role | undefined>>(r => getRole(r.id)));
-    console.log('checked roles ' + JSON.stringify(checked_roles));
-    sanitize_input(
+
+    await sanitize_input(
       m,
       checked_roles,
       roles_to_add,
       'roles',
-      (x: Role[]) => x.join(' '),
+      x => (x ? x.join(' ') : ''),
       (x: SetM<PartialRole>) => x.join(' ')
     );
     // update user already in the db
     if (user) {
       user.roles = user.roles.union(roles_to_add.map(r => r.id));
       await store.update(user);
-    } else {
+    } else if (user_id) {
       // new user
       console.log(`${name} added to the db`);
       const user_db = makeUser(
-        user.id,
+        user_id,
         roles_to_add.map(r => r.id)
       );
       console.log(JSON.stringify(user_db));
       await store.add(user_db);
+    } else {
+      reply(z, m, 'User not found on this zulip, check name');
     }
-    const user_id = await getUserIdByName(z, name);
-    await syncUsers([user_id]); // invite them now
+    if (user_id) {
+      await syncUsers([user_id]); // invite them now
+    }
   };
 
   const addStream = async (
@@ -113,7 +117,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
     if (role) {
       // invite users to the new channel. If the role was inserted no one got it
-      const users_to_be_invited = await getUsersByRole([role_name]);
+      const users_to_be_invited = await getUsersByRole([role]);
       await syncUsers(users_to_be_invited.map(u => Number(u.id)));
     }
   };
@@ -148,27 +152,23 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     t: T,
     t_req: T2,
     type: 'roles' | 'streams' | 'user',
-    f_t: (x: T) => string,
-    f_t_req: (x: T2) => string
+    f_t: (x: T) => string = String,
+    f_t_req: (x: T2) => string = String
   ) => {
-    if (t.length !== t_req.length) {
-      await reply(
-        z,
-        m,
-        `Some ${type} were not found, please check. Streams names requested: \`${f_t_req(t_req)}\` 
-        ${type} found: \`${f_t(t)}\`` +
-          type ===
-          'streams'
-          ? 'I may be not invited in some streams'
-          : ''
-      );
+    if (t && t.length !== t_req.length) {
+      const txt = `Some ${type} were not found, please check. Streams names requested: \`${f_t_req(t_req)}\` 
+        ${type} found: \`${f_t(t)}\``;
+      await reply(z, m, txt);
       throw Error;
     }
   };
 
   const getUserByName = async (name: string): Promise<User | undefined> => {
     const id = await getUserIdByName(z, name);
-    const user = await store.get(makePartialUser(id));
+    if (!id) {
+      return undefined;
+    }
+    const user: User | undefined = await store.get(makePartialUser(id));
     console.log(user);
     return user;
   };
@@ -179,8 +179,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     return role;
   };
 
-  const getUsersByRole = async (role_names: string[]): Promise<User[]> => {
-    const roles = await Promise.all(role_names.map(getRole));
+  const getUsersByRole = async (roles: Role[]): Promise<User[]> => {
     const unfiltered_users: User[] = await store.list_user();
     console.log(roles);
     return roles.flatMap(r => unfiltered_users.filter(u => u.roles.has(r.id)));
@@ -188,9 +187,16 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
   const test = async (msg: ZulipMsg) => {
     const res = await getUserByName('Ext');
-    const res2 = await getUserByName('xxxx');
+    // const res2 = await getUserByName('xxxx');
     console.log(JSON.stringify(res));
-    console.log(JSON.stringify(res2));
+    // console.log(JSON.stringify(res2));
+    try {
+      await sanitize_input(msg, [1, 2, 3], [4], 'roles');
+    } catch (err) {
+      console.log(err);
+      await react(z, msg, 'cross_mark');
+      /* await reply(z, msg, 'Sorry, I could not parse that. Try the help command, maybe?'); */
+    }
   };
 
   const syncUsers = async (only_these?: ZulipUserId[]) => {
@@ -201,7 +207,10 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     console.log(streams);
     await Promise.all(
       users.map(user => {
-        let streams_should_be_in: SetM<StreamId> = user.roles.flatMap(r_id => roles.find(r => r.id == r_id).streams);
+        // about `find`. We know user roles are a subset of all roles.
+        let streams_should_be_in: SetM<StreamId> = user.roles.flatMap(
+          r_id => (roles.find(r => r.id == r_id) as Role).streams
+        );
         const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map<string>(s => s.name);
         return invite(z, [Number(user.id)], [...actual_stream_names]);
       })
