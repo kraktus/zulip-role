@@ -1,6 +1,6 @@
 import { createNodeRedisClient } from 'handy-redis';
 import { ZulipUserId, StreamId } from './zulip';
-import { RoleId, Role, User } from './user';
+import { RoleId, Role, User, makePartialUser, makePartialRole } from './user';
 
 export interface StoreItem {
   type: 'user' | 'role'
@@ -13,14 +13,17 @@ export interface Store {
   list: (a: StoreItem) => Promise<any[]>;
   update: (a: StoreItem) => Promise<boolean>;
   delete: (a: StoreItem) => Promise<boolean>;
+
+  list_user: () => Promise<User[]>;
+  list_role: () => Promise<Role[]>;
 }
 
 // Just one possible implementation.
 export class RedisStore implements Store {
   private client = createNodeRedisClient({
-    port: parseInt(process.env.REDIS_PORT),
+    port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
     password: process.env.REDIS_PASSWORD,
-    db: process.env.REDIS_DB,
+    db: process.env.REDIS_DB ? process.env.REDIS_DB : 1,
   })
   private prefix = 'zulip-role'
   private hashKey = (a: StoreItem) => `${this.prefix}-hash-${a.type}`
@@ -43,11 +46,11 @@ export class RedisStore implements Store {
   }
 
   update = async (a: StoreItem) => {
+    // do not allow adding new keys
     if (!await this.client.hexists(this.hashKey(a), a.id)) {
       console.error(`Trying to update an non-existing value: ${a.id}`)
       return false
     }
-    // do not allow for updates
     const res = await this.client.hset(this.hashKey(a), [a.id, JSON.stringify(a)]); // use stringify to allow for changes in `StoreItem`
     return res === 1;
   };
@@ -66,4 +69,12 @@ export class RedisStore implements Store {
     const r = JSON.parse(entry);
     return r;
   };
+
+  list_user = async () => {
+    return this.list(makePartialUser(0)) 
+  }
+
+  list_role = async () => {
+    return this.list(makePartialRole("")) 
+  }
 }

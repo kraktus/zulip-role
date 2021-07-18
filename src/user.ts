@@ -2,10 +2,10 @@ import { ZulipUserId, StreamId } from './zulip';
 import { StoreItem } from './store';
 import { SetM } from './util';
 
-export type RoleId = string;
+export type RoleId = Uppercase<string>
 
 export interface PartialUser extends StoreItem {
-  type: 'user'
+  readonly type: 'user'
   id : string // string version of ZulipUserId
 }
 
@@ -14,7 +14,7 @@ export interface User extends PartialUser {
 }
 
 export interface PartialRole extends StoreItem {
-  type: 'role'
+  readonly type: 'role'
   id: RoleId
 }
 

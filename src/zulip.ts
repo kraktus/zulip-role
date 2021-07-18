@@ -1,4 +1,5 @@
 import { promisify } from 'util';
+import { SetM } from './util';
 
 export interface Zulip {
   queues: any;
@@ -128,9 +129,14 @@ export const invite = async (zulip: Zulip, users: ZulipUserId[], to: StreamName[
   await zulip.users.me.subscriptions.add(params);
 };
 
-export const getSubbedStreams = async (zulip: Zulip): Promise<Stream[]> => {
+export const getSubbedStreams = async (zulip: Zulip): Promise<SetM<Stream>> => {
   const res = await zulip.streams.subscriptions.retrieve()
-  return res.subscriptions
+  return new SetM(res.subscriptions)
+}
+
+export const getStreamByName = async (zulip: Zulip, stream_names: SetM<Stream['name']>): Promise<SetM<Stream>> => {
+  const all_streams = await getSubbedStreams(zulip)
+  return all_streams.filter(s => stream_names.has(s.name.toLowerCase()))
 }
 
 export const getAllStreams = async (zulip: Zulip): Promise<Stream[]> => 
