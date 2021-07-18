@@ -15,6 +15,7 @@ export class SetM<T> extends Set<T> {
    filter = < Z extends UnPack<ReturnType<T[]['filter']>> >(...args: Parameters<T[]['filter']>): SetM<Z> => new SetM<Z>([...this].filter(...args) as Z[]);
    join = < Z extends UnPack<ReturnType<T[]['join']>> >(...args: Parameters<T[]['join']>): Z => [...this].join(...args) as Z;
    toJSON = [...this]
+   length = this.size
 
    union = (other: SetM<T>): SetM<T> => new SetM([...this, ...other])
 

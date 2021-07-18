@@ -51,8 +51,10 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
   // --------------- command functions
 
-  const addRole = async (_: ZulipMsg, name: ZulipUserName, roles_to_add: SetM<PartialRole>) => {
+  const addRole = async (m: ZulipMsg, name: ZulipUserName, roles_to_add: SetM<PartialRole>) => {
     const user: User | undefined = await getUserByName(name);
+    const checked_roles: Role[] = await Promise.all(roles_to_add.map<Promise<Role>>(r => getRole(r.id)))
+    sanitize_input(m, checked_roles, roles_to_add, 'roles', (x: Role[]) => x.join(' '), (x: SetM<PartialRole>) => x.join(' '))
     // update user already in the db
     if (user) {
     user.roles = user.roles.union(roles_to_add.map(r => r.id));
@@ -60,6 +62,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     } else { // new user
       console.log(`${name} added to the db`)
       const user_db = makeUser(user.id, roles_to_add.map(r => r.id))
+      console.log(JSON.stringify(user_db))
       await store.add(user_db)
     }
     const user_id = await getUserIdByName(z, name);
@@ -69,12 +72,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   const addStream = async (m: ZulipMsg, role_name: string, stream_names: SetM<Stream['name']>, insert: boolean = false) => {
     const role: Role | undefined = await getRole(role_name)
     const streams: SetM<Stream> = await getStreamByName(z, stream_names)
-    if (streams.size !== stream_names.size) {
-      await reply(z, m, `Some streams were not found, please check. Streams names requested: \`${stream_names.join(' ')}\` 
-        Streams found: \`${streams.map(s => s.name).join(' ')}\
-        Either names are wrong or I'm not invited in those streams.`)
-        throw Error
-    }
+    sanitize_input(m, streams, stream_names, 'streams', (x: SetM<Stream>) => x.map(s => s.name).join(' '), (x: SetM<Stream['name']>) => x.join(' '))
     console.log(`Streams fetched ${[...streams]}`)
     if (role) {
       role.streams = role.streams.union(streams.map(s => s.stream_id))
@@ -97,17 +95,29 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
  const list = async (msg: ZulipMsg, streams: boolean = true) => { // DEBUG: should be false by default
    const users: User[] = await store.list_user()
    const roles: Role[] = await store.list_role()
+   const stream_set = await getSubbedStreams(z)
+   const stream_map = new Map(stream_set.map(s => [s.stream_id, s.name]))
    const table = [['Role', 'Users', 'Streams'],
      ...roles.map(r =>
      [r.id,
      users.filter(u => u.roles.has(r.id)).map(u => u.id).join(' '),
-     streams ? r.streams.map<string>(s => s.toString()).join(' ') : ''
+     streams ? r.streams.map<string>(s_id => stream_map.get(s_id)).join(' ') : ''
      ])]
     await reply(z, msg, markdownTable(table))
  }
 
 
   // --------------- helper functions
+
+
+  const sanitize_input = async <T extends {length: number}, T2 extends {length: number}> (m: ZulipMsg, t: T,  t_req: T2, type: 'roles' | 'streams' | 'user', f_t: (x: T) => string, f_t_req: (x: T2) => string) => {
+    if (t.length !== t_req.length) {
+      await reply(z, m, `Some ${type} were not found, please check. Streams names requested: \`${f_t_req(t_req)}\` 
+        ${type} found: \`${f_t(t)}\``
+        + type === 'streams' ? 'I may be not invited in some streams': '')
+        throw Error
+    }
+  }
 
    const getUserByName = async (name: string): Promise<User> => {
     const id = await getUserIdByName(z, name);
@@ -162,7 +172,6 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     console.log(`Message stripped bot mention: ${msg.command}`);
     try {
       const command = await parseCommand(msg.command);
-      console.log(`Command: ${command}`)
       if (command) {
         // @ts-expect-error
         await commands[command.verb](msg, ...command.args) // TODO fix that

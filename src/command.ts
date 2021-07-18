@@ -11,6 +11,9 @@ type FunctionReturnValues<T> = {
 
 const parseAddRole = (msg: string): [ZulipUserName, SetM<PartialRole>] => {
   // first word is the command name
+  console.log(msg.split(' '))
+  console.log(msg.split(' ').slice(1, -1))
+  console.log(msg.split(' ').slice(-1)[0])
   const roles: SetM<PartialRole> = new SetM(msg.split(' ').slice(1, -1).map(id => makePartialRole(id)));
   const userName: ZulipUserName = msg.split(' ').slice(-1)[0]
   return [userName, roles]
