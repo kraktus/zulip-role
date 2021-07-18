@@ -131,11 +131,13 @@ export const invite = async (zulip: Zulip, users: ZulipUserId[], to: StreamName[
 
 export const getSubbedStreams = async (zulip: Zulip): Promise<SetM<Stream>> => {
   const res = await zulip.streams.subscriptions.retrieve()
+  console.log(`raw streams: ${JSON.stringify(res)}`)
   return new SetM(res.subscriptions)
 }
 
 export const getStreamByName = async (zulip: Zulip, stream_names: SetM<Stream['name']>): Promise<SetM<Stream>> => {
   const all_streams = await getSubbedStreams(zulip)
+  console.log(`All streams: ${JSON.stringify(all_streams)}`)
   return all_streams.filter(s => stream_names.has(s.name.toLowerCase()))
 }
 

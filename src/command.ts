@@ -31,12 +31,12 @@ const parseAddStream = (msg: string): [string, SetM<Stream['name']>] => {
 
 const remove_first_char_if = (str: string, char: string) => str.startsWith(char) ? str.substring(char.length): str
 
-const noParse = (msg: string): void => undefined
+const noParse = (msg: string): [] => []
 
 const verbs = {'add_role':  parseAddRole,
                'add_stream':  parseAddStream,
                'create_role':  parseAddStream,
-               'list_roles': noParse,
+               'list': noParse,
                     } as const;
 
 type Verb = keyof typeof verbs;

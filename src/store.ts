@@ -1,6 +1,7 @@
 import { createNodeRedisClient } from 'handy-redis';
 import { ZulipUserId, StreamId } from './zulip';
 import { RoleId, Role, User, makePartialUser, makePartialRole } from './user';
+import { SetM } from './util';
 
 export interface StoreItem {
   type: 'user' | 'role'
@@ -41,6 +42,8 @@ export class RedisStore implements Store {
 
   add = async (a: StoreItem) => {
     // do not allow updates
+    console.log(a)
+    console.log(JSON.stringify(a))
     const res = await this.client.hsetnx(this.hashKey(a), a.id, JSON.stringify(a)); // use stringify to allow for changes in `StoreItem`
     return res === 1;
   }
@@ -66,7 +69,12 @@ export class RedisStore implements Store {
   };
 
   private read = (entry: string): any => {
+    console.log(entry)
     const r = JSON.parse(entry);
+    console.log(r)
+    if (r.type === 'role') {
+      r.streams = new SetM(r.streams.toJSON)
+    }
     return r;
   };
 

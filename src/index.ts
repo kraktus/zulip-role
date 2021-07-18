@@ -66,9 +66,16 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     await syncUsers([user_id]) // invite them now
   }
 
-  const addStream = async (_: ZulipMsg, role_name: string, stream_names: SetM<Stream['name']>, insert: boolean = false) => {
+  const addStream = async (m: ZulipMsg, role_name: string, stream_names: SetM<Stream['name']>, insert: boolean = false) => {
     const role: Role | undefined = await getRole(role_name)
     const streams: SetM<Stream> = await getStreamByName(z, stream_names)
+    if (streams.size !== stream_names.size) {
+      await reply(z, m, `Some streams were not found, please check. Streams names requested: \`${stream_names.join(' ')}\` 
+        Streams found: \`${streams.map(s => s.name).join(' ')}\
+        Either names are wrong or I'm not invited in those streams.`)
+        throw Error
+    }
+    console.log(`Streams fetched ${[...streams]}`)
     if (role) {
       role.streams = role.streams.union(streams.map(s => s.stream_id))
       await store.update(role)
@@ -152,12 +159,14 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
 
     const messageHandler = async (msg: ZulipMsg) => {
-    console.log(`Command: ${msg.command}`);
+    console.log(`Message stripped bot mention: ${msg.command}`);
     try {
       const command = await parseCommand(msg.command);
-      console.log(command)
+      console.log(`Command: ${command}`)
       if (command) {
-        await commands[command.verb](msg, ...command.args as any) // TODO fix that
+        // @ts-expect-error
+        await commands[command.verb](msg, ...command.args) // TODO fix that
+        await react(z, msg, 'check_mark');
       }
     } catch (err) {
       console.log(err);
