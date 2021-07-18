@@ -18,6 +18,7 @@ import {
   Stream,
   ZulipUserId,
   getStreamByName,
+  getAllUsers,
 } from './zulip';
 import { RedisStore, Store } from './store';
 import { markdownTable, SetM } from './util';
@@ -128,18 +129,21 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   const list = async (msg: ZulipMsg, streams: boolean = true) => {
     // DEBUG: should be false by default
     const users: User[] = await store.list_user();
+    const users_api = await getAllUsers(z);
     const roles: Role[] = await store.list_role();
     const stream_set = await getSubbedStreams(z);
     const stream_map = new Map(stream_set.map(s => [s.stream_id, s.name]));
+    const user_api_map = new Map(users_api.map(u => [u.user_id, u.full_name]));
     const table = [
       ['Role', 'Users', 'Streams'],
       ...roles.map(r => [
         r.id,
         users
           .filter(u => u.roles.has(r.id))
-          .map(u => u.id)
+          .map(u => user_api_map.get(Number(u.id)))
           .join(' '),
-        streams ? r.streams.map<string>(s_id => stream_map.get(s_id)).join(' ') : '',
+        // https://stackoverflow.com/a/37199067/11955835
+        streams ? r.streams.map<string>(stream_map.get.bind(stream_map)).join(' ') : '',
       ]),
     ];
     await reply(z, msg, markdownTable(table));
@@ -241,5 +245,5 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     }
   };
 
-  await messageLoop(z, test);
+  await messageLoop(z, messageHandler);
 })();

@@ -153,9 +153,14 @@ export const getStreamByName = async (zulip: Zulip, stream_names: SetM<Stream['n
 export const getAllStreams = async (zulip: Zulip): Promise<Stream[]> =>
   await zulip.streams.retrieve({ include_all_active: true });
 
-export const getUserIdByName = async (zulip: Zulip, full_name: string) => {
-  const users: userResponse = await zulip.users.retrieve();
-  const user = users.members.find(u => u.full_name === full_name);
+export const getAllUsers = async (zulip: Zulip): Promise<ZulipUser[]> => {
+  const resp: userResponse = await zulip.users.retrieve({ client_gravatar: true });
+  return resp.members;
+};
+
+export const getUserIdByName = async (zulip: Zulip, full_name: string): Promise<ZulipUserId | undefined> => {
+  const users = await getAllUsers(zulip);
+  const user = users.find(u => u.full_name === full_name);
   return user ? user.user_id : undefined;
 };
 

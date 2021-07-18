@@ -74,6 +74,8 @@ export class RedisStore implements Store {
     console.log(r);
     if (r.type === 'role') {
       r.streams = new SetM(r.streams.toJSON);
+    } else if (r.type === 'user') {
+      r.roles = new SetM(r.roles.toJSON);
     }
     return r;
   };
