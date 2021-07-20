@@ -26,34 +26,13 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   const z: Zulip = await zulipInit.default({ zuliprc: 'zuliprc-admin.txt' });
   const store: Store = new RedisStore();
 
-  const help = async (msg: ZulipMsg) => {
-    const name = await botName(z);
-    const mention = `@${name}`;
-    await reply(
-      z,
-      msg,
-      [
-        'Use `' + mention + '` to set a reminder for yourself, or for a stream.',
-        'Some examples include:',
-        '- `' + mention + ' me on June 1st to wish Linda happy birthday`',
-        '- `' + mention + ' me to stop procrastinating tomorrow`',
-        '- `' + mention + ' here in 3 hours to update the project status`',
-        '- `' + mention + ' stream to party hard on 2021-09-27 at 10pm`',
-        '',
-        'Use `' + mention + ' list` to see the list of all your reminders.',
-        '',
-        'Use `' + mention + ' delete id` to delete a reminder by its ID',
-      ].join('\n')
-    );
-  };
-
   // --------------- command functions
 
   const addRole = async (m: ZulipMsg, name: ZulipUserName, roles_to_add: SetM<PartialRole>) => {
     const user: User | undefined = await getUserByName(name);
     const user_id = await getUserIdByName(z, name);
     console.log('roles to add ' + roles_to_add.join(' '));
-    const checked_roles = await Promise.all(roles_to_add.map<Promise<Role | undefined>>(r => getRole(r.id)));
+    const checked_roles = await Promise.all(roles_to_add.map(r => getRole(r.id)));
 
     await sanitize_input(
       m,
@@ -135,7 +114,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
           .map(u => user_api_map.get(Number(u.id)))
           .join(' '),
         // https://stackoverflow.com/a/37199067/11955835
-        streams ? r.streams.map<string>(stream_map.get.bind(stream_map)).join(' ') : '',
+        streams ? r.streams.map(stream_map.get.bind(stream_map)).join(' ') : '',
       ]),
     ];
     await reply(z, msg, markdownTable(table));
@@ -189,7 +168,6 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     } catch (err) {
       console.log(err);
       await react(z, msg, 'cross_mark');
-      /* await reply(z, msg, 'Sorry, I could not parse that. Try the help command, maybe?'); */
     }
   };
 

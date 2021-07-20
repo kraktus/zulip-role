@@ -91,8 +91,9 @@ export const messageLoop = async (zulip: Zulip, handler: (msg: ZulipMsg) => Prom
         if (event.type == 'heartbeat') {
           //console.log('Zulip heartbeat');
         } else if (event.message) {
-          // ignore own messages
-          if (event.message.sender_id != me.user_id) {
+          // ignore own messages and only handle those which starts with a ping to the bot
+          event.message.content = event.message.content.trim()
+          if (event.message.sender_id != me.user_id && event.message.content.startsWith(`@**${me.full_name}**`)) {
             event.message.command = event.message.content.replace(`@**${me.full_name}**`, '').trim();
             await handler(event.message as ZulipMsg);
           }
