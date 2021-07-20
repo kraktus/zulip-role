@@ -161,19 +161,15 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   };
 
   const test = async (msg: ZulipMsg) => {
-    const res = await getUserByName('Ext');
-    console.log(JSON.stringify(res));
-    try {
-      await sanitize_input(msg, [1, 2, 3], [4], 'roles');
-    } catch (err) {
-      console.log(err);
-      await react(z, msg, 'cross_mark');
-    }
+  const t = new SetM(["a", "a", "a"])
+  console.log(JSON.stringify(t))
   };
 
-  const syncUsers = async (only_these?: ZulipUserId[]) => {
+  const syncUsers = async (only_these?: ZulipUserId[]): Promise<void> => {
+    console.log("Sync user called")
     const unfiltered_users: User[] = await store.list_user();
-    const users = only_these ? unfiltered_users.filter(u => Number(u.id) in only_these) : unfiltered_users;
+    const users = only_these ? unfiltered_users.filter(u => only_these.includes(Number(u.id))) : unfiltered_users;
+    console.log("filtered users: " + JSON.stringify(users))
     const roles: Role[] = await store.list_role();
     const streams = await getSubbedStreams(z);
     console.log(streams);
@@ -183,7 +179,9 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
         const streams_should_be_in: SetM<StreamId> = user.roles.flatMap(
           r_id => (roles.find(r => r.id == r_id) as Role).streams
         );
+        console.log("streams_should_be_in: " + JSON.stringify(streams_should_be_in))
         const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map<string>(s => s.name);
+        console.log("actual_stream_names: " + JSON.stringify(actual_stream_names))
         return invite(z, [Number(user.id)], [...actual_stream_names]);
       })
     );
@@ -213,5 +211,5 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     }
   };
 
-  await messageLoop(z, messageHandler);
+  await messageLoop(z, test);
 })();

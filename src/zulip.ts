@@ -136,7 +136,8 @@ export const invite = async (zulip: Zulip, users: ZulipUserId[], to: StreamName[
     subscriptions: to.map(n => ({ name: n })), // Is considered as code block without parenthesis
     principals: users,
   };
-  await zulip.users.me.subscriptions.add(params);
+  const res = await zulip.users.me.subscriptions.add(params);
+  console.log('response invitation api '+res)
 };
 
 export const getSubbedStreams = async (zulip: Zulip): Promise<SetM<Stream>> => {
