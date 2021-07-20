@@ -1,6 +1,5 @@
 import { createNodeRedisClient } from 'handy-redis';
-import { ZulipUserId, StreamId } from './zulip';
-import { RoleId, Role, User, makePartialUser, makePartialRole } from './user';
+import { Role, User, makePartialUser, makePartialRole } from './user';
 import { SetM } from './util';
 
 export interface StoreItem {

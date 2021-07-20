@@ -1,6 +1,7 @@
-import { ZulipUserName, Stream } from './zulip';
+import { CommandList, Verb } from './command_list';
 import { PartialRole, makePartialRole } from './user';
 import { SetM } from './util';
+import { ZulipUserName, Stream } from './zulip';
 
 type FunctionReturnValues<T> = {
   [K in keyof T]: T[K] extends (...args: any) => any ? ReturnType<T[K]> : never;
@@ -43,14 +44,13 @@ const remove_first_char_if = (str: string, char: string) => (str.startsWith(char
 
 const noParse = (msg: string): [] => [];
 
-const verbs = {
+const verbs: CommandList = {
   add_role: parseAddRole,
   add_stream: parseAddStream,
   create_role: parseAddStream,
   list: noParse,
 } as const;
 
-type Verb = keyof typeof verbs;
 type Args = FunctionReturnValues<typeof verbs>;
 interface ParsedInput {
   verb: Verb;

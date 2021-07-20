@@ -1,19 +1,16 @@
 import * as zulipInit from 'zulip-js';
+import { CommandList } from './command_list';
 import {
   Zulip,
   ZulipMsg,
   messageLoop,
   reply,
-  send,
   react,
   invite,
-  ZulipDestPrivate,
   botName,
-  printDest,
   getUserIdByName,
   ZulipUserName,
   getSubbedStreams,
-  userIdFromMail,
   StreamId,
   Stream,
   ZulipUserId,
@@ -23,7 +20,7 @@ import {
 import { RedisStore, Store } from './store';
 import { markdownTable, SetM } from './util';
 import { parseCommand } from './command';
-import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, PartialRole, PartialUser } from './user';
+import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, PartialRole } from './user';
 
 (async () => {
   const z: Zulip = await zulipInit.default({ zuliprc: 'zuliprc-admin.txt' });
@@ -87,12 +84,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     }
   };
 
-  const addStream = async (
-    m: ZulipMsg,
-    role_name: string,
-    stream_names: SetM<Stream['name']>,
-    insert: boolean = false
-  ) => {
+  const addStream = async (m: ZulipMsg, role_name: string, stream_names: SetM<Stream['name']>, insert = false) => {
     const role = await getRole(role_name);
     const streams: SetM<Stream> = await getStreamByName(z, stream_names);
     sanitize_input(
@@ -126,7 +118,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   const createRole = async (_: ZulipMsg, role_name: string, stream_names: SetM<Stream['name']>) =>
     addStream(_, role_name, stream_names, true);
 
-  const list = async (msg: ZulipMsg, streams: boolean = true) => {
+  const list = async (msg: ZulipMsg, streams = true) => {
     // DEBUG: should be false by default
     const users: User[] = await store.list_user();
     const users_api = await getAllUsers(z);
@@ -191,9 +183,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
 
   const test = async (msg: ZulipMsg) => {
     const res = await getUserByName('Ext');
-    // const res2 = await getUserByName('xxxx');
     console.log(JSON.stringify(res));
-    // console.log(JSON.stringify(res2));
     try {
       await sanitize_input(msg, [1, 2, 3], [4], 'roles');
     } catch (err) {
@@ -222,7 +212,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
   };
 
   // ------------------------
-  const commands = {
+  const commands: CommandList = {
     add_role: addRole,
     add_stream: addStream,
     create_role: createRole,
@@ -234,8 +224,8 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     try {
       const command = await parseCommand(msg.command);
       if (command) {
-        // @ts-expect-error. Command.args returns proper value to the corresponding function
-        await commands[command.verb](msg, ...command.args); // TODO fix that
+        // Command.args returns proper value to the corresponding function
+        await commands[command.verb](msg, ...command.args);
         await react(z, msg, 'check_mark');
       }
     } catch (err) {

@@ -173,5 +173,3 @@ export const react = async (zulip: Zulip, to: ZulipMsg, emoji: string) =>
   });
 
 export const printDest = (dest: ZulipDest) => (dest.type == 'stream' ? `\`${dest.topic}\`` : 'you');
-// https://chat.zulip.org/#narrow/stream/378-api-design/topic/.2Fget-subscriptions.20doc.20missmatch.3F
-export const userIdFromMail = (mail: string): ZulipUserId => Number(mail.split('user')[1].split('@')[0]); // bug, should already return ids
