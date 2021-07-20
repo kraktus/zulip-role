@@ -92,7 +92,7 @@ export const messageLoop = async (zulip: Zulip, handler: (msg: ZulipMsg) => Prom
           //console.log('Zulip heartbeat');
         } else if (event.message) {
           // ignore own messages and only handle those which starts with a ping to the bot
-          event.message.content = event.message.content.trim()
+          event.message.content = event.message.content.trim();
           if (event.message.sender_id != me.user_id && event.message.content.startsWith(`@**${me.full_name}**`)) {
             event.message.command = event.message.content.replace(`@**${me.full_name}**`, '').trim();
             await handler(event.message as ZulipMsg);
@@ -137,7 +137,7 @@ export const invite = async (zulip: Zulip, users: ZulipUserId[], to: StreamName[
     principals: users,
   };
   const res = await zulip.users.me.subscriptions.add(params);
-  console.log('response invitation api '+res)
+  console.log('response invitation api ' + res);
 };
 
 export const getSubbedStreams = async (zulip: Zulip): Promise<SetM<Stream>> => {
