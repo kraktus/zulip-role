@@ -212,7 +212,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     await Promise.all(
       users.map(user => {
         // about `find`. We know user roles are a subset of all roles.
-        let streams_should_be_in: SetM<StreamId> = user.roles.flatMap(
+        const streams_should_be_in: SetM<StreamId> = user.roles.flatMap(
           r_id => (roles.find(r => r.id == r_id) as Role).streams
         );
         const actual_stream_names = streams.filter(s => streams_should_be_in.has(s.stream_id)).map<string>(s => s.name);
@@ -234,7 +234,7 @@ import { Role, User, makeRole, makeUser, makePartialUser, makePartialRole, Parti
     try {
       const command = await parseCommand(msg.command);
       if (command) {
-        // @ts-expect-error
+        // @ts-expect-error. Command.args returns proper value to the corresponding function
         await commands[command.verb](msg, ...command.args); // TODO fix that
         await react(z, msg, 'check_mark');
       }

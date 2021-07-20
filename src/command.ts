@@ -1,9 +1,6 @@
-import { ZulipDest, ZulipOrig, ZulipUserName, Stream } from './zulip';
-import { RedisStore, Store } from './store';
-import { PartialRole, User, makePartialRole, makeUser } from './user';
+import { ZulipUserName, Stream } from './zulip';
+import { PartialRole, makePartialRole } from './user';
 import { SetM } from './util';
-
-type ValueOf<T> = T[keyof T];
 
 type FunctionReturnValues<T> = {
   [K in keyof T]: T[K] extends (...args: any) => any ? ReturnType<T[K]> : never;

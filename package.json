@@ -5,7 +5,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^14.6.0",
-    "chrono-node": "^2.3.0",
+    "@typescript-eslint/eslint-plugin": "4.25.0",
+    "@typescript-eslint/parser": "4.25.0",
+    "eslint": "^7.31.0",
     "nodemon": "^2.0",
     "prettier": "2.3.2",
     "ts-node": "^10",
@@ -14,12 +16,13 @@
   "dependencies": {
     "handy-redis": "^2.2.1",
     "redis": "^3.1.2",
-    "timezone-support": "^2.0.2",
     "zulip-js": "^2.0.9"
   },
   "scripts": {
     "build": "tsc",
     "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts",
+    "format": "yarn prettier --write .",
+    "lint": "eslint . --ext .ts",
     "start": "node dist/index.js",
     "test": "mocha -r ts-node/register tests/**/*.test.ts"
   }
