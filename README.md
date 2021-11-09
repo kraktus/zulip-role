@@ -1,6 +1,6 @@
 # Meta
 
-Status: **Not functional, under active development**
+Status: **Not functional**
 
 # Zulip Role
 
